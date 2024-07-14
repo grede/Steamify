@@ -2,9 +2,6 @@ from asyncio import sleep
 from random import uniform
 from data import config
 from utils.core import logger
-import datetime
-import pandas as pd
-from utils.telegram import Accounts
 import asyncio
 from aiohttp.client_exceptions import ContentTypeError
 from utils.steamify import SteamifyBot

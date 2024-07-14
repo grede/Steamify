@@ -1,13 +1,13 @@
 from utils.core import create_sessions
 from utils.telegram import Accounts
-from utils.starter import start, stats
+from utils.starter import start
 import asyncio
 import os
 
 
 async def main():
     print("This soft is based on code created by https://t.me/ApeCryptor\n")
-    action = int(input("Select action:\n1. Start soft2. Create sessions\n\n> "))
+    action = int(input("Select action:\n1. Start soft\n2. Create sessions\n\n> "))
 
     if not os.path.exists('sessions'): os.mkdir('sessions')
     if not os.path.exists('sessions/accounts.json'):
