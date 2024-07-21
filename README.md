@@ -15,8 +15,6 @@ Preferably python 3.6-3.9
 
 ---
 
-# Steamify
-
 Steamify клэймер https://t.me/steamify_bot
 
 Клэймер сделан на основе кода Blum клэймера созданного [ApeCryptor](https://t.me/+_xCNXumUNWJkYjAy "ApeCryptor") 🦧
