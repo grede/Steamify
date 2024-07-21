@@ -3,6 +3,10 @@ Steamify claimer https://t.me/steamify_bot
 
 This soft is based on Blum claimer soft created by [ApeCryptor](https://t.me/+_xCNXumUNWJkYjAy "ApeCryptor") 🦧
 
+### Functionality
+1. Claim points
+2. Start farming
+
 ### Configuration ⚙️
 1. Get api id and api hash from [here](https://my.telegram.org/auth "here")
 2. Open `data/config.py` and put your api id and api hash
@@ -18,6 +22,10 @@ Preferably python 3.6-3.9
 Steamify клэймер https://t.me/steamify_bot
 
 Клэймер сделан на основе кода Blum клэймера созданного [ApeCryptor](https://t.me/+_xCNXumUNWJkYjAy "ApeCryptor") 🦧
+
+### Возможности
+1. Клэйм поинтов
+2. Фарминг
 
 ### Настройка ⚙️
 1. Получить api id и api hash [здесь](https://my.telegram.org/auth "here")
