@@ -20,7 +20,7 @@ async def start(thread: int, session_name: str, phone_number: str, proxy: [str, 
 
             await sleep(uniform(2, 8))
             logger.info(f"Thread {thread} | {account} | Retrieving account state...")
-            balance, claimable, farm_status, started_at, total_duration = await steamify.getStatus()
+            balance, claimable, farm_status, started_at, total_duration = await steamify.get_status()
 
             logger.success(
                 f"Thread {thread} | {account} | Current balance: {balance} | Claimable balance: {claimable} | Farm status: {farm_status}")
@@ -31,10 +31,11 @@ async def start(thread: int, session_name: str, phone_number: str, proxy: [str, 
                 logger.success(f"Thread {thread} | {account} | Claimed {claimed} in rewards")
             elif (farm_status == 'available'):
                 await sleep(uniform(2, 8))
-                await steamify.startFarm()
+                await steamify.start_farm()
                 logger.success(f"Thread {thread} | {account} | Started farming")
             elif (farm_status == 'in_progress'):
                 await sleep(uniform(2, 8))
+                await steamify.play_case_game()
                 sleepTime = steamify.calcSleep(started_at, total_duration)
                 logger.success(f"Thread {thread} | {account} | Sleeping for {sleepTime}")
                 await sleep(sleepTime + uniform(*config.DELAYS['CLAIM']))
