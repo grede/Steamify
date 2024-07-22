@@ -6,6 +6,7 @@ This soft is based on Blum claimer soft created by [ApeCryptor](https://t.me/+_x
 ### Functionality
 1. Claim points
 2. Start farming
+3. Open weapon cases
 
 ### Configuration ⚙️
 1. Get api id and api hash from [here](https://my.telegram.org/auth "here")
@@ -26,6 +27,7 @@ Steamify клэймер https://t.me/steamify_bot
 ### Возможности
 1. Клэйм поинтов
 2. Фарминг
+3. Открытие кейсов с оружием
 
 ### Настройка ⚙️
 1. Получить api id и api hash [здесь](https://my.telegram.org/auth "here")
