@@ -4,7 +4,7 @@ Steamify claimer https://t.me/steamify_bot
 This soft is based on Blum claimer soft created by [ApeCryptor](https://t.me/+_xCNXumUNWJkYjAy "ApeCryptor") 🦧
 
 ### Functionality
-1. Claim points
+1. Claim daily / farming points
 2. Start farming
 3. Open weapon cases
 
@@ -25,7 +25,7 @@ Steamify клэймер https://t.me/steamify_bot
 Клэймер сделан на основе кода Blum клэймера созданного [ApeCryptor](https://t.me/+_xCNXumUNWJkYjAy "ApeCryptor") 🦧
 
 ### Возможности
-1. Клэйм поинтов
+1. Клэйм ежедневных / фарминг поинтов
 2. Фарминг
 3. Открытие кейсов с оружием
 
