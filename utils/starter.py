@@ -25,6 +25,10 @@ async def start(thread: int, session_name: str, phone_number: str, proxy: [str, 
             logger.success(
                 f"Thread {thread} | {account} | Current balance: {balance} | Claimable balance: {claimable} | Farm status: {farm_status}")
 
+            # claim daily
+            await sleep(uniform(2, 8))
+            await steamify.claim_daily()
+
             if (farm_status == 'completed'):
                 await sleep(uniform(2, 8))
                 claimed = await steamify.claim()

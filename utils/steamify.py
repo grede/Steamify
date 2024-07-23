@@ -160,6 +160,18 @@ class SteamifyBot:
 
         return dict(sorted(price_dict.items()))
 
+    async def claim_daily(self):
+        logger.info(f"Thread {self.thread} | {self.account} | Claiming daily points...")
+        resp = await self.session.get('https://api.app.steamify.io/api/v1/user/daily/claim')
+        resp_json = await resp.json()
+
+        if (resp.status != 200):
+            respText = await resp.text()
+            raise Exception(f"couldn't claim daily points: {respText}")
+
+        data = resp_json.get('data')
+        logger.success(f"Thread {self.thread} | {self.account} | Claimed daily points | Current streak: {data.get('current_streak')} day(s)")
+
     async def logout(self):
         await self.session.close()
 
