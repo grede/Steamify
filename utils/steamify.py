@@ -190,7 +190,7 @@ class SteamifyBot:
             respText = await resp.text()
             raise Exception(f"couldn't claim a task reward: {respText}")
 
-        logger.success(f"Claimed task reward: {task.get('base_rewards')}")
+        logger.success(f"Claimed '{task.get('name')}' task reward: {task.get('base_rewards')}")
 
     def select_random_case_with(self, price_dict):
         min_price, max_price = config.CASE_OPEN_GAME['CASE_PRICE']
