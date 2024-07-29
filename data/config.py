@@ -7,6 +7,12 @@ DELAYS = {
     'CLAIM': [60, 180]   # delay in seconds before claim points every 8 hours
 }
 
+TASKS = {
+    'PERFORM_TASKS': True, # whether soft should perform tasks / claim task rewards or not
+    'DELAY': [5, 15], # delay in seconds in between any task actions
+    'BLACKLIST_TASK': ["Invite 1 friend", "Invite 5 friends", "Invite 15 friends"] # names of tasks that soft should not attempt to perform
+}
+
 CASE_OPEN_GAME = {
     'PLAY': True,  # whether soft should open cases or not
     'CASES_TO_BE_OPENED': [0, 3],  # number of cases soft should open at one go (min, max)

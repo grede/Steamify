@@ -102,7 +102,7 @@ class SteamifyBot:
 
         max_plays = random.randint(*config.CASE_OPEN_GAME['CASES_TO_BE_OPENED'])
         logger.info(f"Thread {self.thread} | {self.account} | Going to open {max_plays} cases...")
-        await sleep(uniform(2, 8))
+        await self.random_wait()
 
         plays = 0
 
@@ -113,13 +113,13 @@ class SteamifyBot:
                 logger.warning(f"Thread {self.thread} | {self.account} | Current balance ({balance}) is lower than minimal defined in config ({config.CASE_OPEN_GAME['MIN_BALANCE_CONTROL']}), skipping playing...")
                 return
 
-            await sleep(uniform(2, 8))
+            await self.random_wait()
             cases = await self.list_cases()
 
             selected_case = self.select_random_case_with(cases)
             logger.info(f"Thread {self.thread} | {self.account} | Selected case to open: '{selected_case['name']}', price: ${selected_case['price']}")
 
-            await sleep(uniform(2, 8))
+            await self.random_wait()
             weapon = await self.open_case(selected_case)
             logger.success(f"Thread {self.thread} | {self.account} | Opened a new case ({plays + 1} out of {max_plays}) | Weapon: {weapon.get('name')} | Rarity: {weapon.get('rarity')} | Is rare special item: {weapon.get('is_rare_special_item')}")
             plays += 1
@@ -135,6 +135,62 @@ class SteamifyBot:
 
         resp_json = await resp.json()
         return resp_json.get('data')[0]
+
+    async def perform_tasks(self):
+        if not config.TASKS['PERFORM_TASKS']:
+            return
+        logger.info(f"Thread {self.thread} | {self.account} | Performing tasks...")
+        await self.random_wait()
+
+        for task in await self.get_tasks():
+            state = task['user_state']['status']
+            if state == 'unavailable' or state == 'claimed' or task['name'] in config.TASKS['BLACKLIST_TASK']: continue
+
+            try:
+                if state == 'available':
+                    await asyncio.sleep(random.uniform(*config.TASKS['DELAY']))
+                    await self.start_task(task)
+                    await asyncio.sleep(random.uniform(*config.TASKS['DELAY']))
+                    await self.claim_task(task)
+                elif state == 'completed':
+                    await asyncio.sleep(random.uniform(*config.TASKS['DELAY']))
+                    await self.claim_task(task)
+            except Exception as e:
+                logger.error(f"Thread {self.thread} | {self.account} | Error: {e}")
+                await asyncio.sleep(random.uniform(*config.TASKS['DELAY']))
+
+
+    async def get_tasks(self):
+        logger.info(f"Thread {self.thread} | {self.account} | Fetching list of tasks...")
+        resp = await self.session.get('https://api.app.steamify.io/api/v1/user/task/list')
+        resp_json = await resp.json()
+
+        if (resp.status != 200):
+            respText = await resp.text()
+            raise Exception(f"couldn't retrieve list of tasks: {respText}")
+
+        data = resp_json.get('data').get('tasks')
+        return data
+
+    async def start_task(self, task):
+        logger.info(f"Thread {self.thread} | {self.account} | Starting a new task '{task.get('name')}'...")
+        resp = await self.session.get(f"https://api.app.steamify.io/api/v1/user/task/{task.get('id')}/start")
+
+        if (resp.status != 200):
+            respText = await resp.text()
+            raise Exception(f"couldn't start a task: {respText}")
+
+        logger.success(f"Successfully started a task: '{task.get('name')}'")
+
+    async def claim_task(self, task):
+        logger.info(f"Thread {self.thread} | {self.account} | Claiming reward for a task '{task.get('name')}', reward: {task.get('base_rewards')}...")
+        resp = await self.session.get(f"https://api.app.steamify.io/api/v1/user/task/{task.get('id')}/claim")
+
+        if (resp.status != 200):
+            respText = await resp.text()
+            raise Exception(f"couldn't claim a task reward: {respText}")
+
+        logger.success(f"Claimed task reward: {task.get('base_rewards')}")
 
     def select_random_case_with(self, price_dict):
         min_price, max_price = config.CASE_OPEN_GAME['CASE_PRICE']
@@ -186,6 +242,9 @@ class SteamifyBot:
 
         self.session.headers['Authorization'] = 'Bearer ' + query
         return True
+
+    async def random_wait(self):
+        await sleep(uniform(2, 10))
 
     @staticmethod
     def calcSleep(started_at, total_duration):
