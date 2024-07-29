@@ -6,7 +6,8 @@ This soft is based on Blum claimer soft created by [ApeCryptor](https://t.me/+_x
 ### Functionality
 1. Claim daily / farming points
 2. Start farming
-3. Open weapon cases
+3. Start tasks / Claim task rewards
+4. Open weapon cases
 
 ### Configuration ⚙️
 1. Get api id and api hash from [here](https://my.telegram.org/auth "here")
@@ -27,7 +28,8 @@ Steamify клэймер https://t.me/steamify_bot
 ### Возможности
 1. Клэйм ежедневных / фарминг поинтов
 2. Фарминг
-3. Открытие кейсов с оружием
+3. Выполнение заданий / клэйм поинтов за задания
+4. Открытие кейсов с оружием
 
 ### Настройка ⚙️
 1. Получить api id и api hash [здесь](https://my.telegram.org/auth "here")
