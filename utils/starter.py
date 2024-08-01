@@ -33,22 +33,11 @@ async def start(thread: int, session_name: str, phone_number: str, proxy: [str, 
             await steamify.random_wait()
             await steamify.perform_tasks()
 
-            if (farm_status == 'completed'):
-                await steamify.random_wait()
-                claimed = await steamify.claim()
-                logger.success(f"Thread {thread} | {account} | Claimed {claimed} in rewards")
-            elif (farm_status == 'available'):
-                await steamify.random_wait()
-                await steamify.start_farm()
-                logger.success(f"Thread {thread} | {account} | Started farming")
-            elif (farm_status == 'in_progress'):
-                await steamify.random_wait()
-                await steamify.play_case_game()
-                sleepTime = steamify.calcSleep(started_at, total_duration)
-                logger.success(f"Thread {thread} | {account} | Sleeping for {sleepTime}")
-                await sleep(sleepTime + uniform(*config.DELAYS['CLAIM']))
-            else:
-                raise Exception("unknown farm status")
+            # play game
+            await steamify.play_case_game()
+
+            # farm
+            await handle_farm(steamify, thread, account)
 
             await sleep(30)
         except ContentTypeError as e:
@@ -58,3 +47,26 @@ async def start(thread: int, session_name: str, phone_number: str, proxy: [str, 
         except Exception as e:
             logger.error(f"Thread {thread} | {account} | Error: {e}")
             await asyncio.sleep(120)
+
+
+async def handle_farm(steamify, thread, account):
+    while True:
+        await steamify.random_wait()
+        balance, claimable, farm_status, started_at, total_duration = await steamify.get_status()
+
+        if farm_status == 'completed':
+            await steamify.random_wait()
+            claimed = await steamify.claim()
+            logger.success(f"Thread {thread} | {account} | Claimed {claimed} in rewards")
+        elif farm_status == 'available':
+            await steamify.random_wait()
+            await steamify.start_farm()
+            logger.success(f"Thread {thread} | {account} | Started farming")
+        elif farm_status == 'in_progress':
+            await steamify.random_wait()
+            sleepTime = steamify.calcSleep(started_at, total_duration)
+            logger.success(f"Thread {thread} | {account} | Sleeping for {sleepTime}")
+            await sleep(sleepTime + uniform(*config.DELAYS['CLAIM']))
+            return
+        else:
+            raise Exception("unknown farm status")

@@ -66,7 +66,7 @@ class SteamifyBot:
             respText = await resp.text()
             raise Exception(f"couldn't retrieve account status: {respText}")
 
-        return int(resp_json.get('data').get('balance')), int(
+        return int(resp_json.get('data').get('points')), int(
             resp_json.get('data').get('farm').get('base_rewards')), resp_json.get('data').get('farm').get(
             'status'), resp_json.get('data').get('farm').get(
             'started_at'), resp_json.get('data').get('farm').get(
@@ -258,7 +258,7 @@ class SteamifyBot:
                 bot=await self.client.resolve_peer('steamify_bot'),
                 platform='android',
                 from_bot_menu=False,
-                url='https://t.me/steamify_bot/app'
+                url='https://app.steamify.io/'
             ))
 
             await self.client.disconnect()
@@ -271,5 +271,6 @@ class SteamifyBot:
             hash_ = query.split('&hash=')[1]
 
             return f"query_id={query_id}&user={user}&auth_date={auth_date}&hash={hash_}"
-        except:
+        except Exception as error:
+            logger.error(f"Error getting web data: {error}")
             return None
