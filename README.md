@@ -1,6 +1,8 @@
 # Steamify
 Steamify claimer https://t.me/steamify_bot
 
+Contact / Связь: https://t.me/lafra_k
+
 This soft is based on Blum claimer soft created by [ApeCryptor](https://t.me/+_xCNXumUNWJkYjAy "ApeCryptor") 🦧
 
 ### Functionality
