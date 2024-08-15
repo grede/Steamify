@@ -20,14 +20,17 @@ async def start(thread: int, session_name: str, phone_number: str, proxy: [str, 
 
             await steamify.random_wait()
             logger.info(f"Thread {thread} | {account} | Retrieving account state...")
-            balance, claimable, farm_status, started_at, total_duration = await steamify.get_status()
+            balance, sparks, tickets, farm_status, started_at, total_duration = await steamify.get_status()
 
             logger.success(
-                f"Thread {thread} | {account} | Current balance: {balance} | Claimable balance: {claimable} | Farm status: {farm_status}")
+                f"Thread {thread} | {account} | Current balance: {balance} | Sparks: {sparks} | Tickets: {tickets} | Farm status: {farm_status}")
 
             # claim daily
             await steamify.random_wait()
             await steamify.claim_daily()
+
+            # claim sparks
+            await steamify.claim_sparks()
 
             # perform tasks
             await steamify.random_wait()
@@ -52,7 +55,7 @@ async def start(thread: int, session_name: str, phone_number: str, proxy: [str, 
 async def handle_farm(steamify, thread, account):
     while True:
         await steamify.random_wait()
-        balance, claimable, farm_status, started_at, total_duration = await steamify.get_status()
+        balance, sparks, tickets, farm_status, started_at, total_duration = await steamify.get_status()
 
         if farm_status == 'completed':
             await steamify.random_wait()

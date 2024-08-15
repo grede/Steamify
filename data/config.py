@@ -13,6 +13,10 @@ TASKS = {
     'BLACKLIST_TASK': ["Invite 1 friend", "Invite 5 friends", "Invite 15 friends"] # names of tasks that soft should not attempt to perform
 }
 
+SPARKS = {
+    'COLLECT_SPARKS': True, # whether soft should collect sparks
+}
+
 CASE_OPEN_GAME = {
     'PLAY': True,  # whether soft should open cases or not
     'CASES_TO_BE_OPENED': [0, 3],  # number of cases soft should open at one go (min, max)

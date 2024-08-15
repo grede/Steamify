@@ -66,11 +66,12 @@ class SteamifyBot:
             respText = await resp.text()
             raise Exception(f"couldn't retrieve account status: {respText}")
 
-        return int(resp_json.get('data').get('points')), int(
-            resp_json.get('data').get('farm').get('base_rewards')), resp_json.get('data').get('farm').get(
-            'status'), resp_json.get('data').get('farm').get(
-            'started_at'), resp_json.get('data').get('farm').get(
-            'total_duration') if resp_json.get("success") else await resp.text()
+        return (resp_json.get('data').get('points'),
+                resp_json.get('data').get('sparks'),
+                resp_json.get('data').get('tickets'),
+                resp_json.get('data').get('farm').get('status'),
+                resp_json.get('data').get('farm').get('started_at'),
+                resp_json.get('data').get('farm').get('total_duration') if resp_json.get("success") else await resp.text())
 
     async def claim(self):
         logger.info(f"Thread {self.thread} | {self.account} | Claiming rewards...")
@@ -192,6 +193,31 @@ class SteamifyBot:
 
         logger.success(f"Claimed '{task.get('name')}' task reward: {task.get('base_rewards')}")
 
+    async def claim_sparks(self):
+        if not config.SPARKS['COLLECT_SPARKS']:
+            return
+
+        await self.random_wait()
+        inventory = await self.retrieve_inventory()
+        last_claim = int(inventory['farm']['last_claim'])
+        min_duration = int(inventory['farm']['min_duration'])
+
+        if (last_claim + min_duration) > int(time.time()):
+            logger.warning(f"Thread {self.thread} | {self.account} | Can't claim sparks yet, retry later")
+            return
+
+        logger.info(f"Thread {self.thread} | {self.account} | Claiming sparks...")
+        await self.random_wait()
+        resp = await self.session.get(f"https://api.app.steamify.io/api/v1/game/case/inventory/claim")
+
+        if (resp.status != 200):
+            respText = await resp.text()
+            raise Exception(f"couldn't claim sparks: {respText}")
+
+        json = await resp.json()
+        sparks_claimed = json.get('data').get('claimed_sparks')
+        logger.success(f"Claimed {sparks_claimed}")
+
     def select_random_case_with(self, price_dict):
         min_price, max_price = config.CASE_OPEN_GAME['CASE_PRICE']
         filtered_items = {k: v for k, v in price_dict.items() if min_price <= k <= max_price}
@@ -202,15 +228,26 @@ class SteamifyBot:
         random_price = random.choice(list(filtered_items.keys()))
         return filtered_items[random_price]
 
+    async def retrieve_inventory(self):
+        logger.info(f"Thread {self.thread} | {self.account} | Loading inventory...")
+        resp = await self.session.get('https://api.app.steamify.io/api/v1/game/case/inventory')
+
+        if (resp.status != 200):
+            respText = await resp.text()
+            raise Exception(f"couldn't retrieve inventory: {respText}")
+
+        json = await resp.json()
+        return json.get('data')
+
     async def list_cases(self):
         logger.info(f"Thread {self.thread} | {self.account} | Loading cases...")
         resp = await self.session.get('https://api.app.steamify.io/api/v1/game/case/list')
-        resp_json = await resp.json()
 
         if (resp.status != 200):
             respText = await resp.text()
             raise Exception(f"couldn't load game cases: {respText}")
 
+        resp_json = await resp.json()
         data = resp_json.get('data')
         price_dict = {item["price"]: {"id": item["id"], "name": item["name"], "price": item["price"]} for item in data}
 
