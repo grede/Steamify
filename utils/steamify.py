@@ -108,7 +108,7 @@ class SteamifyBot:
         plays = 0
 
         while plays < max_plays:
-            balance, claimable, farm_status, started_at, total_duration = await self.get_status()
+            balance, sparks, tickets, farm_status, started_at, total_duration = await self.get_status()
 
             if balance < config.CASE_OPEN_GAME['MIN_BALANCE_CONTROL']:
                 logger.warning(f"Thread {self.thread} | {self.account} | Current balance ({balance}) is lower than minimal defined in config ({config.CASE_OPEN_GAME['MIN_BALANCE_CONTROL']}), skipping playing...")
