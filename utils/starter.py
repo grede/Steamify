@@ -32,6 +32,9 @@ async def start(thread: int, session_name: str, phone_number: str, proxy: [str, 
             # claim sparks
             await steamify.claim_sparks()
 
+            # claim tickets / video task
+            await steamify.perform_video_tasks()
+
             # perform tasks
             await steamify.random_wait()
             await steamify.perform_tasks()

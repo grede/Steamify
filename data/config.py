@@ -17,6 +17,13 @@ SPARKS = {
     'COLLECT_SPARKS': True, # whether soft should collect sparks
 }
 
+# Use with caution, disabled by default
+TICKETS = {
+    'COLLECT_TICKETS': False, # whether soft should collect tickets
+    'VIDEO_WATCH_TIME': [15, 20], # time in seconds that soft will pause for, simulating video watch. Not recommended to use values lower than 15 seconds
+    'TICKETS_TO_COLLECT': [0, 3], # number of tickets to collect every time script runs
+}
+
 CASE_OPEN_GAME = {
     'PLAY': True,  # whether soft should open cases or not
     'CASES_TO_BE_OPENED': [0, 3],  # number of cases soft should open at one go (min, max)

@@ -137,6 +137,53 @@ class SteamifyBot:
         resp_json = await resp.json()
         return resp_json.get('data')[0]
 
+    async def perform_video_tasks(self):
+        if not config.TICKETS['COLLECT_TICKETS']:
+            return
+
+        logger.info(f"Thread {self.thread} | {self.account} | Collecting tickets...")
+        await self.random_wait()
+        watched, max = await self.fetch_video_tasks()
+
+        left_to_claim = max - watched
+        tickets_to_claim = min(left_to_claim, random.randint(*config.TICKETS['TICKETS_TO_COLLECT']))
+
+        if tickets_to_claim <= 0:
+            logger.warning(f"Thread {self.thread} | {self.account} | No tickets left to claim (or check your TICKETS_TO_COLLECT parameter)")
+            return
+
+        for i in range(tickets_to_claim):
+            await sleep(random.uniform(*config.TICKETS['VIDEO_WATCH_TIME']))
+            await self.claim_video_ticket(i, tickets_to_claim)
+
+    async def claim_video_ticket(self, i, total):
+        logger.info(f"Thread {self.thread} | {self.account} | Claiming video task ticket {i+1} out of {total}")
+        resp = await self.session.post('https://api.app.steamify.io/api/v1/user/task/video/claim')
+
+        if (resp.status != 200):
+            respText = await resp.text()
+            raise Exception(f"couldn't claim video task ticket: {respText}")
+
+        json = await resp.json()
+        if json.get("success"):
+            logger.success(f"Thread {self.thread} | {self.account} | Claimed video task tickets: {json['data']['claimed_tickets']}")
+        else:
+            raise Exception(f"couldn't claim video task ticket")
+
+    async def fetch_video_tasks(self):
+        logger.info(f"Thread {self.thread} | {self.account} | Fetching video tasks...")
+        resp = await self.session.get('https://api.app.steamify.io/api/v1/user/task/video')
+
+        if (resp.status != 200):
+            respText = await resp.text()
+            raise Exception(f"couldn't retrieve video tasks: {respText}")
+
+        json = await resp.json()
+        if json.get("success"):
+            return json['data']['watched'], json['data']['max']
+        else:
+            raise Exception(f"couldn't retrieve video tasks")
+
     async def perform_tasks(self):
         if not config.TASKS['PERFORM_TASKS']:
             return
@@ -164,12 +211,12 @@ class SteamifyBot:
     async def get_tasks(self):
         logger.info(f"Thread {self.thread} | {self.account} | Fetching list of tasks...")
         resp = await self.session.get('https://api.app.steamify.io/api/v1/user/task/list')
-        resp_json = await resp.json()
 
         if (resp.status != 200):
             respText = await resp.text()
             raise Exception(f"couldn't retrieve list of tasks: {respText}")
 
+        resp_json = await resp.json()
         data = resp_json.get('data').get('tasks')
         return data
 
