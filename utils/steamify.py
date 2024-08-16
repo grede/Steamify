@@ -216,7 +216,7 @@ class SteamifyBot:
 
         json = await resp.json()
         sparks_claimed = json.get('data').get('claimed_sparks')
-        logger.success(f"Claimed {sparks_claimed}")
+        logger.success(f"Thread {self.thread} | {self.account} | Claimed {sparks_claimed}")
 
     def select_random_case_with(self, price_dict):
         min_price, max_price = config.CASE_OPEN_GAME['CASE_PRICE']
