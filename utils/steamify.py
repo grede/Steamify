@@ -135,7 +135,7 @@ class SteamifyBot:
             raise Exception(f"couldn't open case: {respText}")
 
         resp_json = await resp.json()
-        return resp_json.get('data')[0]
+        return resp_json.get('data')('assets')[0]
 
     async def perform_video_tasks(self):
         if not config.TICKETS['COLLECT_TICKETS']:
