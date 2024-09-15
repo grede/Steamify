@@ -82,7 +82,7 @@ class SteamifyBot:
                 resp_json.get('data').get('farm').get('status'),
                 resp_json.get('data').get('farm').get('started_at'),
                 resp_json.get('data').get('farm').get('total_duration') if resp_json.get(
-                    "success") else await resp.text())
+                    "success") else resp.text())
 
     async def get_me(self):
         resp = self.session.get('https://api.app.steamify.io/api/v1/user/me', timeout=self.timeout)
@@ -101,11 +101,11 @@ class SteamifyBot:
         resp_json = resp.json()
 
         if (resp.status_code != 200):
-            respText = await resp.text()
+            respText = resp.text()
             raise Exception(f"couldn't claim rewards: {respText}")
 
         return resp_json.get('data').get('claim').get('total_rewards') if resp_json.get(
-            "success") else await resp.text()
+            "success") else resp.text()
 
     async def start_farm(self):
         logger.info(f"Thread {self.thread} | {self.account} | Starting farm...")
@@ -113,11 +113,11 @@ class SteamifyBot:
         resp_json = resp.json()
 
         if (resp.status_code != 200):
-            respText = await resp.text()
+            respText = resp.text()
             raise Exception(f"couldn't start farming: {respText}")
 
         return resp_json.get('data').get('farm').get('started_at'), resp_json.get('data').get('farm').get(
-            'total_duration') if resp_json.get("success") else await resp.text()
+            'total_duration') if resp_json.get("success") else resp.text()
 
     async def play_case_game(self):
         if not config.CASE_OPEN_GAME['PLAY']:
@@ -159,7 +159,7 @@ class SteamifyBot:
                                  timeout=self.timeout)
 
         if (resp.status_code != 200):
-            respText = await resp.text()
+            respText = resp.text()
             raise Exception(f"couldn't open case: {respText}")
 
         resp_json = resp.json()
@@ -193,7 +193,7 @@ class SteamifyBot:
         resp = self.session.get('https://api.app.steamify.io/api/v1/user/task/list', timeout=self.timeout)
 
         if (resp.status_code != 200):
-            respText = await resp.text()
+            respText = resp.text()
             raise Exception(f"couldn't retrieve list of tasks: {respText}")
 
         resp_json = resp.json()
@@ -206,7 +206,7 @@ class SteamifyBot:
                                 timeout=self.timeout)
 
         if (resp.status_code != 200):
-            respText = await resp.text()
+            respText = resp.text()
             raise Exception(f"couldn't start a task: {respText}")
 
         logger.success(f"Successfully started a task: '{task.get('name')}'")
@@ -218,7 +218,7 @@ class SteamifyBot:
                                 timeout=self.timeout)
 
         if (resp.status_code != 200):
-            respText = await resp.text()
+            respText = resp.text()
             raise Exception(f"couldn't claim a task reward: {respText}")
 
         logger.success(f"Claimed '{task.get('name')}' task reward: {task.get('base_rewards')}")
@@ -241,7 +241,7 @@ class SteamifyBot:
         resp = self.session.get('https://api.app.steamify.io/api/v1/game/case/inventory/claim', timeout=self.timeout)
 
         if (resp.status_code != 200):
-            respText = await resp.text()
+            respText = resp.text()
             raise Exception(f"couldn't claim sparks: {respText}")
 
         json = resp.json()
@@ -263,7 +263,7 @@ class SteamifyBot:
         resp = self.session.get('https://api.app.steamify.io/api/v1/game/case/inventory', timeout=self.timeout)
 
         if (resp.status_code != 200):
-            respText = await resp.text()
+            respText = resp.text()
             raise Exception(f"couldn't retrieve inventory: {respText}")
 
         json = resp.json()
@@ -274,7 +274,7 @@ class SteamifyBot:
         resp = self.session.get('https://api.app.steamify.io/api/v1/game/case/list', timeout=self.timeout)
 
         if (resp.status_code != 200):
-            respText = await resp.text()
+            respText = resp.text()
             raise Exception(f"couldn't load game cases: {respText}")
 
         resp_json = resp.json()
@@ -289,7 +289,7 @@ class SteamifyBot:
         resp_json = resp.json()
 
         if (resp.status_code != 200):
-            respText = await resp.text()
+            respText = resp.text()
             raise Exception(f"couldn't claim daily points: {respText}")
 
         data = resp_json.get('data')
