@@ -10,7 +10,6 @@ This soft is based on Blum claimer soft created by [ApeCryptor](https://t.me/+_x
 2. Start farming
 3. Start tasks / Claim task rewards
 4. Open weapon cases
-5. Simulate video watch / collect tickets
 
 ### Configuration ⚙️
 1. Get api id and api hash from [here](https://my.telegram.org/auth "here")
