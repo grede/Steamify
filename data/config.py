@@ -17,19 +17,12 @@ SPARKS = {
     'COLLECT_SPARKS': True, # whether soft should collect sparks
 }
 
-# Use with caution, disabled by default
-TICKETS = {
-    'COLLECT_TICKETS': False, # whether soft should collect tickets
-    'VIDEO_WATCH_TIME': [15, 20], # time in seconds that soft will pause for, simulating video watch. Not recommended to use values lower than 15 seconds
-    'TICKETS_TO_COLLECT': [0, 3], # number of tickets to collect every time script runs
-}
-
 CASE_OPEN_GAME = {
     'PLAY': True,  # whether soft should open cases or not
-    'CASES_TO_BE_OPENED': [0, 3],  # number of cases soft should open at one go (min, max)
+    'CASES_TO_BE_OPENED': [0, 1],  # number of cases soft should open at one go (min, max)
     'DELAY_BETWEEN_OPENINGS': [15, 60],  # delay in seconds (min, max) between each case opening attempt
-    'CASE_PRICE': [0, 30],  # price range (min, max) in which soft would randomly pick next case to be opened
-    'MIN_BALANCE_CONTROL': 30  # min account balance at which soft will stop any attempt to buy new cases
+    'CASE_PRICE': [0, 300],  # price range (min, max) in which soft would randomly pick next case to be opened
+    'MIN_BALANCE_CONTROL': 1000  # min account balance at which soft will stop any attempt to buy new cases
 }
 
 PROXY_TYPES = {
@@ -42,3 +35,4 @@ WORKDIR = "sessions/"
 
 # timeout in seconds for checking accounts on valid
 TIMEOUT = 30
+REQUEST_TIMEOUT = 120

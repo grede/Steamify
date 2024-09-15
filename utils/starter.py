@@ -3,7 +3,6 @@ from random import uniform
 from data import config
 from utils.core import logger
 import asyncio
-from aiohttp.client_exceptions import ContentTypeError
 from utils.steamify import SteamifyBot
 
 
@@ -32,9 +31,6 @@ async def start(thread: int, session_name: str, phone_number: str, proxy: [str, 
             # claim sparks
             await steamify.claim_sparks()
 
-            # claim tickets / video task
-            await steamify.perform_video_tasks()
-
             # perform tasks
             await steamify.random_wait()
             await steamify.perform_tasks()
@@ -46,10 +42,6 @@ async def start(thread: int, session_name: str, phone_number: str, proxy: [str, 
             await handle_farm(steamify, thread, account)
 
             await sleep(30)
-        except ContentTypeError as e:
-            logger.error(f"Thread {thread} | {account} | Error: {e}")
-            await asyncio.sleep(120)
-
         except Exception as e:
             logger.error(f"Thread {thread} | {account} | Error: {e}")
             await asyncio.sleep(120)

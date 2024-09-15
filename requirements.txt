@@ -4,4 +4,4 @@ loguru==0.7.2
 aiohttp==3.9.5
 fake-useragent==1.5.1
 pandas==2.2.2
-aiohttp_socks==0.8.4
+curl_cffi==0.2.1

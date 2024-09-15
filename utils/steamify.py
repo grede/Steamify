@@ -1,16 +1,15 @@
 import random
+from curl_cffi import requests
 from utils.core import logger
 from pyrogram import Client
 from pyrogram.raw.functions.messages import RequestWebView
 import asyncio
 from urllib.parse import unquote, quote
 from data import config
-import aiohttp
 import time
 from asyncio import sleep
 from random import uniform
 from fake_useragent import UserAgent
-from aiohttp_socks import ProxyConnector
 
 def retry_async(max_retries=2):
     def decorator(func):
@@ -33,10 +32,13 @@ class SteamifyBot:
     def __init__(self, thread: int, session_name: str, phone_number: str, proxy: [str, None]):
         self.account = session_name + '.session'
         self.thread = thread
-        self.proxy = f"{config.PROXY_TYPES['REQUESTS']}://{proxy}" if proxy is not None else None
-        connector = ProxyConnector.from_url(self.proxy) if proxy else aiohttp.TCPConnector(verify_ssl=False)
 
         if proxy:
+            self.proxy = f"{config.PROXY_TYPES['REQUESTS']}://{proxy}"
+            self.proxy_config = {
+                "http": f"{config.PROXY_TYPES['REQUESTS']}://{proxy}",
+                "https": f"{config.PROXY_TYPES['REQUESTS']}://{proxy}"
+            }
             proxy = {
                 "scheme": config.PROXY_TYPES['TG'],
                 "hostname": proxy.split(":")[1].split("@")[1],
@@ -53,17 +55,25 @@ class SteamifyBot:
             proxy=proxy,
             lang_code='en'
         )
+        headers = {
+            "accept": "application/json, text/plain, */*",
+            'User-Agent': UserAgent(os='android').random
+        }
 
-        headers = {'User-Agent': UserAgent(os='android').random}
-        self.session = aiohttp.ClientSession(headers=headers, trust_env=True, connector=connector,
-                                             timeout=aiohttp.ClientTimeout(120))
+        self.session = requests.Session()
+        self.session.headers.update(headers)
+
+        if self.proxy_config:
+            self.session.proxies.update(self.proxy_config)
+
+        self.timeout = config.REQUEST_TIMEOUT
 
     async def get_status(self):
-        resp = await self.session.get('https://api.app.steamify.io/api/v1/user/me')
-        resp_json = await resp.json()
+        resp = self.session.get('https://api.app.steamify.io/api/v1/user/me', timeout=self.timeout)
+        resp_json = resp.json()
 
-        if (resp.status != 200):
-            respText = await resp.text()
+        if (resp.status_code != 200):
+            respText = resp.text()
             raise Exception(f"couldn't retrieve account status: {respText}")
 
         return (resp_json.get('data').get('points'),
@@ -71,29 +81,43 @@ class SteamifyBot:
                 resp_json.get('data').get('tickets'),
                 resp_json.get('data').get('farm').get('status'),
                 resp_json.get('data').get('farm').get('started_at'),
-                resp_json.get('data').get('farm').get('total_duration') if resp_json.get("success") else await resp.text())
+                resp_json.get('data').get('farm').get('total_duration') if resp_json.get(
+                    "success") else await resp.text())
+
+    async def get_me(self):
+        resp = self.session.get('https://api.app.steamify.io/api/v1/user/me', timeout=self.timeout)
+
+        if (resp.status_code != 200):
+            respText = resp.text()
+            raise Exception(f"couldn't retrieve account status: {respText}")
+
+        resp_json = resp.json()
+
+        return resp_json.get('data') if resp_json.get("success") else resp.text()
 
     async def claim(self):
         logger.info(f"Thread {self.thread} | {self.account} | Claiming rewards...")
-        resp = await self.session.get('https://api.app.steamify.io/api/v1/farm/claim')
-        resp_json = await resp.json()
+        resp = self.session.get('https://api.app.steamify.io/api/v1/farm/claim', timeout=self.timeout)
+        resp_json = resp.json()
 
-        if (resp.status != 200):
+        if (resp.status_code != 200):
             respText = await resp.text()
             raise Exception(f"couldn't claim rewards: {respText}")
 
-        return resp_json.get('data').get('claim').get('total_rewards') if resp_json.get("success") else await resp.text()
+        return resp_json.get('data').get('claim').get('total_rewards') if resp_json.get(
+            "success") else await resp.text()
 
     async def start_farm(self):
         logger.info(f"Thread {self.thread} | {self.account} | Starting farm...")
-        resp = await self.session.get('https://api.app.steamify.io/api/v1/farm/start')
-        resp_json = await resp.json()
+        resp = self.session.get('https://api.app.steamify.io/api/v1/farm/start', timeout=self.timeout)
+        resp_json = resp.json()
 
-        if (resp.status != 200):
+        if (resp.status_code != 200):
             respText = await resp.text()
             raise Exception(f"couldn't start farming: {respText}")
 
-        return resp_json.get('data').get('farm').get('started_at'), resp_json.get('data').get('farm').get('total_duration') if resp_json.get("success") else await resp.text()
+        return resp_json.get('data').get('farm').get('started_at'), resp_json.get('data').get('farm').get(
+            'total_duration') if resp_json.get("success") else await resp.text()
 
     async def play_case_game(self):
         if not config.CASE_OPEN_GAME['PLAY']:
@@ -111,78 +135,35 @@ class SteamifyBot:
             balance, sparks, tickets, farm_status, started_at, total_duration = await self.get_status()
 
             if balance < config.CASE_OPEN_GAME['MIN_BALANCE_CONTROL']:
-                logger.warning(f"Thread {self.thread} | {self.account} | Current balance ({balance}) is lower than minimal defined in config ({config.CASE_OPEN_GAME['MIN_BALANCE_CONTROL']}), skipping playing...")
+                logger.warning(
+                    f"Thread {self.thread} | {self.account} | Current balance ({balance}) is lower than minimal defined in config ({config.CASE_OPEN_GAME['MIN_BALANCE_CONTROL']}), skipping playing...")
                 return
 
             await self.random_wait()
             cases = await self.list_cases()
 
             selected_case = self.select_random_case_with(cases)
-            logger.info(f"Thread {self.thread} | {self.account} | Selected case to open: '{selected_case['name']}', price: ${selected_case['price']}")
+            logger.info(
+                f"Thread {self.thread} | {self.account} | Selected case to open: '{selected_case['name']}', price: ${selected_case['price']}")
 
             await self.random_wait()
             weapon = await self.open_case(selected_case)
-            logger.success(f"Thread {self.thread} | {self.account} | Opened a new case ({plays + 1} out of {max_plays}) | Weapon: {weapon.get('name')} | Rarity: {weapon.get('rarity')} | Is rare special item: {weapon.get('is_rare_special_item')}")
+            logger.success(
+                f"Thread {self.thread} | {self.account} | Opened a new case ({plays + 1} out of {max_plays}) | Weapon: {weapon['name']} | Rarity: {weapon['rarity']} | Is rare special item: {weapon['is_rare_special_item']}")
             plays += 1
             await sleep(uniform(*config.CASE_OPEN_GAME['DELAY_BETWEEN_OPENINGS']))
 
     async def open_case(self, case):
         logger.info(f"Thread {self.thread} | {self.account} | Opening case '{case['name']}'...")
-        resp = await self.session.post(f"https://api.app.steamify.io/api/v1/game/case/{case['id']}/open", json={'count':1})
+        resp = self.session.post(f"https://api.app.steamify.io/api/v1/game/case/{case['id']}/open", json={'count': 1},
+                                 timeout=self.timeout)
 
-        if (resp.status != 200):
+        if (resp.status_code != 200):
             respText = await resp.text()
             raise Exception(f"couldn't open case: {respText}")
 
-        resp_json = await resp.json()
-        return resp_json.get('data').get('assets')[0]
-
-    async def perform_video_tasks(self):
-        if not config.TICKETS['COLLECT_TICKETS']:
-            return
-
-        logger.info(f"Thread {self.thread} | {self.account} | Collecting tickets...")
-        await self.random_wait()
-        watched, max = await self.fetch_video_tasks()
-
-        left_to_claim = max - watched
-        tickets_to_claim = min(left_to_claim, random.randint(*config.TICKETS['TICKETS_TO_COLLECT']))
-
-        if tickets_to_claim <= 0:
-            logger.warning(f"Thread {self.thread} | {self.account} | No tickets left to claim (or check your TICKETS_TO_COLLECT parameter)")
-            return
-
-        for i in range(tickets_to_claim):
-            await sleep(random.uniform(*config.TICKETS['VIDEO_WATCH_TIME']))
-            await self.claim_video_ticket(i, tickets_to_claim)
-
-    async def claim_video_ticket(self, i, total):
-        logger.info(f"Thread {self.thread} | {self.account} | Claiming video task ticket {i+1} out of {total}")
-        resp = await self.session.post('https://api.app.steamify.io/api/v1/user/task/video/claim')
-
-        if (resp.status != 200):
-            respText = await resp.text()
-            raise Exception(f"couldn't claim video task ticket: {respText}")
-
-        json = await resp.json()
-        if json.get("success"):
-            logger.success(f"Thread {self.thread} | {self.account} | Claimed video task tickets: {json['data']['claimed_tickets']}")
-        else:
-            raise Exception(f"couldn't claim video task ticket")
-
-    async def fetch_video_tasks(self):
-        logger.info(f"Thread {self.thread} | {self.account} | Fetching video tasks...")
-        resp = await self.session.get('https://api.app.steamify.io/api/v1/user/task/video')
-
-        if (resp.status != 200):
-            respText = await resp.text()
-            raise Exception(f"couldn't retrieve video tasks: {respText}")
-
-        json = await resp.json()
-        if json.get("success"):
-            return json['data']['watched'], json['data']['max']
-        else:
-            raise Exception(f"couldn't retrieve video tasks")
+        resp_json = resp.json()
+        return resp_json['data']['assets'][0]
 
     async def perform_tasks(self):
         if not config.TASKS['PERFORM_TASKS']:
@@ -207,34 +188,36 @@ class SteamifyBot:
                 logger.error(f"Thread {self.thread} | {self.account} | Error: {e}")
                 await asyncio.sleep(random.uniform(*config.TASKS['DELAY']))
 
-
     async def get_tasks(self):
         logger.info(f"Thread {self.thread} | {self.account} | Fetching list of tasks...")
-        resp = await self.session.get('https://api.app.steamify.io/api/v1/user/task/list')
+        resp = self.session.get('https://api.app.steamify.io/api/v1/user/task/list', timeout=self.timeout)
 
-        if (resp.status != 200):
+        if (resp.status_code != 200):
             respText = await resp.text()
             raise Exception(f"couldn't retrieve list of tasks: {respText}")
 
-        resp_json = await resp.json()
+        resp_json = resp.json()
         data = resp_json.get('data').get('tasks')
         return data
 
     async def start_task(self, task):
         logger.info(f"Thread {self.thread} | {self.account} | Starting a new task '{task.get('name')}'...")
-        resp = await self.session.get(f"https://api.app.steamify.io/api/v1/user/task/{task.get('id')}/start")
+        resp = self.session.get(f"https://api.app.steamify.io/api/v1/user/task/{task.get('id')}/start",
+                                timeout=self.timeout)
 
-        if (resp.status != 200):
+        if (resp.status_code != 200):
             respText = await resp.text()
             raise Exception(f"couldn't start a task: {respText}")
 
         logger.success(f"Successfully started a task: '{task.get('name')}'")
 
     async def claim_task(self, task):
-        logger.info(f"Thread {self.thread} | {self.account} | Claiming reward for a task '{task.get('name')}', reward: {task.get('base_rewards')}...")
-        resp = await self.session.get(f"https://api.app.steamify.io/api/v1/user/task/{task.get('id')}/claim")
+        logger.info(
+            f"Thread {self.thread} | {self.account} | Claiming reward for a task '{task.get('name')}', reward: {task.get('base_rewards')}...")
+        resp = self.session.get(f"https://api.app.steamify.io/api/v1/user/task/{task.get('id')}/claim",
+                                timeout=self.timeout)
 
-        if (resp.status != 200):
+        if (resp.status_code != 200):
             respText = await resp.text()
             raise Exception(f"couldn't claim a task reward: {respText}")
 
@@ -255,13 +238,13 @@ class SteamifyBot:
 
         logger.info(f"Thread {self.thread} | {self.account} | Claiming sparks...")
         await self.random_wait()
-        resp = await self.session.get(f"https://api.app.steamify.io/api/v1/game/case/inventory/claim")
+        resp = self.session.get('https://api.app.steamify.io/api/v1/game/case/inventory/claim', timeout=self.timeout)
 
-        if (resp.status != 200):
+        if (resp.status_code != 200):
             respText = await resp.text()
             raise Exception(f"couldn't claim sparks: {respText}")
 
-        json = await resp.json()
+        json = resp.json()
         sparks_claimed = json.get('data').get('claimed_sparks')
         logger.success(f"Thread {self.thread} | {self.account} | Claimed {sparks_claimed}")
 
@@ -277,24 +260,24 @@ class SteamifyBot:
 
     async def retrieve_inventory(self):
         logger.info(f"Thread {self.thread} | {self.account} | Loading inventory...")
-        resp = await self.session.get('https://api.app.steamify.io/api/v1/game/case/inventory')
+        resp = self.session.get('https://api.app.steamify.io/api/v1/game/case/inventory', timeout=self.timeout)
 
-        if (resp.status != 200):
+        if (resp.status_code != 200):
             respText = await resp.text()
             raise Exception(f"couldn't retrieve inventory: {respText}")
 
-        json = await resp.json()
+        json = resp.json()
         return json.get('data')
 
     async def list_cases(self):
         logger.info(f"Thread {self.thread} | {self.account} | Loading cases...")
-        resp = await self.session.get('https://api.app.steamify.io/api/v1/game/case/list')
+        resp = self.session.get('https://api.app.steamify.io/api/v1/game/case/list', timeout=self.timeout)
 
-        if (resp.status != 200):
+        if (resp.status_code != 200):
             respText = await resp.text()
             raise Exception(f"couldn't load game cases: {respText}")
 
-        resp_json = await resp.json()
+        resp_json = resp.json()
         data = resp_json.get('data')
         price_dict = {item["price"]: {"id": item["id"], "name": item["name"], "price": item["price"]} for item in data}
 
@@ -302,15 +285,16 @@ class SteamifyBot:
 
     async def claim_daily(self):
         logger.info(f"Thread {self.thread} | {self.account} | Claiming daily points...")
-        resp = await self.session.get('https://api.app.steamify.io/api/v1/user/daily/claim')
-        resp_json = await resp.json()
+        resp = self.session.get('https://api.app.steamify.io/api/v1/user/daily/claim', timeout=self.timeout)
+        resp_json = resp.json()
 
-        if (resp.status != 200):
+        if (resp.status_code != 200):
             respText = await resp.text()
             raise Exception(f"couldn't claim daily points: {respText}")
 
         data = resp_json.get('data')
-        logger.success(f"Thread {self.thread} | {self.account} | Claimed daily points | Current streak: {data.get('current_streak')} day(s)")
+        logger.success(
+            f"Thread {self.thread} | {self.account} | Claimed daily points | Current streak: {data.get('current_streak')} day(s)")
 
     async def logout(self):
         await self.session.close()
@@ -318,12 +302,10 @@ class SteamifyBot:
     async def login(self):
         await asyncio.sleep(random.uniform(*config.DELAYS['ACCOUNT']))
         query = await self.get_tg_web_data()
-
         if query is None:
             logger.error(f"Thread {self.thread} | {self.account} | Session {self.account} invalid")
             await self.logout()
             return None
-
         self.session.headers['Authorization'] = 'Bearer ' + query
         return True
 
